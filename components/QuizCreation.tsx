@@ -1,6 +1,5 @@
 'use client';
 
-import { FC } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { useForm } from 'react-hook-form'
 import { QuizCreationRequest, quizValidator } from '@/lib/validators/form/quiz'
@@ -10,12 +9,13 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { BookOpen, CopyCheck } from 'lucide-react';
 import { Separator } from './ui/separator';
-interface QuizCreationProps {
+import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
-}
+const QuizCreation = () => {
 
-const QuizCreation: FC<QuizCreationProps> = ({ }) => {
-
+    const router = useRouter();
     const form = useForm<QuizCreationRequest>({
         resolver: zodResolver(quizValidator),
         defaultValues: {
@@ -25,8 +25,39 @@ const QuizCreation: FC<QuizCreationProps> = ({ }) => {
         }
     });
 
-    function onSubmit(data: QuizCreationRequest) {
+    const {
+        mutate: createGame,
+        isLoading
+    } = useMutation({
+        mutationFn: async ({
+            amount,
+            topic,
+            type
+        }: QuizCreationRequest) => {
+            const payload: QuizCreationRequest = {
+                amount,
+                topic,
+                type
+            }
 
+            const { data } = await axios.post(`/api/game`, payload);
+            return data;
+        },
+        onSuccess: ({ gameId }) => {
+            if (form.getValues('type') === 'mcq') {
+                router.push(`/play/mcq/${gameId}`);
+            } else {
+                router.push(`/play/open-ended/${gameId}`);
+            }
+        }
+    });
+
+    function onSubmit({ amount, topic, type }: QuizCreationRequest) {
+        createGame({
+            amount,
+            topic,
+            type
+        });
     }
 
     form.watch();
@@ -100,6 +131,7 @@ const QuizCreation: FC<QuizCreationProps> = ({ }) => {
                                 </Button>
                             </div>
                             <Button
+                                disabled={isLoading}
                                 type='submit'>
                                 Submit
                             </Button>

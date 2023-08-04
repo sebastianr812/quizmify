@@ -11,3 +11,10 @@ export const quizValidator = z.object({
 });
 
 export type QuizCreationRequest = z.infer<typeof quizValidator>;
+
+export const CheckAnswerValidator = z.object({
+    questionId: z.string(),
+    userAnswer: z.string()
+});
+
+export type CheckAnswerRequest = z.infer<typeof CheckAnswerValidator>;
